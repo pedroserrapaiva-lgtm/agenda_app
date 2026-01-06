@@ -5,59 +5,100 @@ import 'api_service.dart';
 class AuthService {
   final _storage = const FlutterSecureStorage();
 
-  Future<Map<String, dynamic>> login(LoginRequest request) async {
-    final body = request.toJson();
-    final response = await ApiService().post("/users/login", body: body);
+  int _extractStatus(dynamic status) {
+    if (status is int) return status;
+    if (status is Map && status["code"] is int) return status["code"];
+    return -1;
+  }
 
-    if (response.containsKey("token")) {
-      await _storage.write(key: "token", value: response["token"]);
+  // LOGIN
+  Future<Map<String, dynamic>> login(LoginRequest request) async {
+    try {
+      final response = await ApiService().post(
+        "/users/login",
+        body: request.toJson(),
+      );
+
+      final statusCode = _extractStatus(response["status"]);
+
+      if (statusCode != 200 || !response.containsKey("token")) {
+        return {
+          "success": false,
+          "message": response["message"] ?? "Credenciais inválidas.",
+        };
+      }
 
       final data = response["data"];
+      await _storage.write(key: "token", value: response["token"]);
       await _storage.write(key: "email", value: data["email"]);
       await _storage.write(key: "name", value: data["name"] ?? "");
-    } else {
-      throw Exception("Token não encontrado na resposta do servidor");
+
+      return {
+        "success": true,
+        "message": response["message"] ?? "Login realizado com sucesso!",
+      };
+    } catch (e) {
+      return {"success": false, "message": "Erro inesperado ao fazer login."};
     }
-
-    return response;
   }
 
-
-  Future<String?> getToken() async {
-    return await _storage.read(key: "token");
-  }
-  Future<String?> getName() async {
-    return await _storage.read(key: "name");
-  }
-
-  Future<String?> getEmail() async {
-    return await _storage.read(key: "email");
-  }
-
-  Future<void> logout() async {
-    await _storage.delete(key: "token");
-  }
+  // REGISTER
   Future<Map<String, dynamic>> register({
     required String name,
     required String email,
     required String password,
     required String passwordConfirmation,
   }) async {
-    final body = {
-      "user": {
-        "name": name,
-        "email": email,
-        "password": password,
-        "password_confirmation": passwordConfirmation,
-      },
-    };
+    try {
+      final body = {
+        "user": {
+          "name": name,
+          "email": email,
+          "password": password,
+          "password_confirmation": passwordConfirmation,
+        },
+      };
 
-    final response = await ApiService().post("/users", body: body);
+      final response = await ApiService().post("/users", body: body);
 
-    if (response.containsKey("token")) {
-      await _storage.write(key: "token", value: response["token"]);
+      final statusCode = _extractStatus(response["status"]);
+
+      if (statusCode != 200 && statusCode != 201) {
+        String message = response["message"] ?? "Erro ao cadastrar.";
+
+        if (response["errors"] is List && response["errors"].isNotEmpty) {
+          final backendMsg = response["errors"][0];
+
+          if (backendMsg.contains("already been taken")) {
+            message = "O email informado já está em uso.";
+          }
+        }
+
+        return {"success": false, "message": message};
+      }
+
+      // Sucesso
+      if (response.containsKey("token")) {
+        await _storage.write(key: "token", value: response["token"]);
+      }
+
+      return {
+        "success": true,
+        "message": response["message"] ?? "Cadastro realizado!",
+      };
+    } catch (e) {
+      return {
+        "success": false,
+        "message": "Erro inesperado ao registrar usuário.",
+      };
     }
+  }
 
-    return response;
+  Future<String?> getToken() => _storage.read(key: "token");
+  Future<String?> getName() => _storage.read(key: "name");
+  Future<String?> getEmail() => _storage.read(key: "email");
+
+  Future<void> logout() async {
+    await _storage.delete(key: "token");
   }
 }

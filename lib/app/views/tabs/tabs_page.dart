@@ -1,5 +1,4 @@
 import 'package:agenda_app/app/views/pages/contacts/contacts_page.dart';
-import 'package:agenda_app/app/views/pages/home/home_page.dart';
 import 'package:agenda_app/app/views/profile/profile_page.dart';
 import 'package:flutter/material.dart';
 
@@ -13,7 +12,7 @@ class TabsPage extends StatefulWidget {
 class _TabsPageState extends State<TabsPage> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [HomePage(), ContactsPage(), ProfilePage()];
+  final List<Widget> _pages = [ ContactsPage(), const ProfilePage()];
 
   @override
   Widget build(BuildContext context) {
@@ -35,11 +34,6 @@ class _TabsPageState extends State<TabsPage> {
         showUnselectedLabels: true,
 
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home), 
-            label: "Home",
-          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.contacts_outlined),
             activeIcon: Icon(Icons.contacts),

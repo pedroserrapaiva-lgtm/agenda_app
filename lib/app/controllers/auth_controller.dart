@@ -1,38 +1,62 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import '../models/login_request.dart';
 
 class AuthController extends ChangeNotifier {
   final AuthService _service = AuthService();
+
   bool loading = false;
   String? error;
 
+  // LOGIN
   Future<bool> login(String email, String password) async {
     loading = true;
+    error = null;
     notifyListeners();
 
-    try {
-      final req = LoginRequest(email: email, password: password);
+    final response = await _service.login(
+      LoginRequest(email: email, password: password),
+    );
 
-      final response = await _service.login(req);
+    loading = false;
 
-      final token = response['token'];
-
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString("auth_token", token);
-
-      loading = false;
+    if (response["success"] == true) {
       notifyListeners();
       return true;
-    } catch (e, stack) {
-      loading = false;
-      print("Erro no login: $e");
-      print(stack);
-
-      error = "Email ou senha incorretos.";
-      notifyListeners();
-      return false;
     }
+
+    error = response["message"];
+    notifyListeners();
+    return false;
+  }
+
+  // REGISTER
+  Future<bool> register(
+    String name,
+    String email,
+    String password,
+    String confirmPassword,
+  ) async {
+    loading = true;
+    error = null;
+    notifyListeners();
+
+    final response = await _service.register(
+      name: name,
+      email: email,
+      password: password,
+      passwordConfirmation: confirmPassword,
+    );
+
+    loading = false;
+
+    if (response["success"] == true) {
+      notifyListeners();
+      return true;
+    }
+
+    error = response["message"];
+    notifyListeners();
+    return false;
   }
 }

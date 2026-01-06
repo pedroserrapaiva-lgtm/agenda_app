@@ -1,87 +1,114 @@
+import 'package:agenda_app/app/models/message.dart';
+import 'package:agenda_app/app/services/messages_service.dart';
 import 'package:flutter/material.dart';
-import '../../models/message.dart';
-import '../../services/message_service.dart';
 
 class EditMessagePage extends StatefulWidget {
   final Message message;
+  final int contactId;
 
-  const EditMessagePage({super.key, required this.message});
+  const EditMessagePage({
+    super.key,
+    required this.message,
+    required this.contactId,
+  });
 
   @override
-  _EditMessagePageState createState() => _EditMessagePageState();
+  State<EditMessagePage> createState() => _EditMessagePageState();
 }
 
 class _EditMessagePageState extends State<EditMessagePage> {
-  final _formKey = GlobalKey<FormState>();
-  final MessageService _service = MessageService();
+  final titleController = TextEditingController();
+  final bodyController = TextEditingController();
+  final emailController = TextEditingController();
+  final phoneController = TextEditingController();
 
-  late TextEditingController titleController;
-  late TextEditingController bodyController;
-
-  bool loading = false;
+  late MessagesService messagesService;
+  bool saving = false;
 
   @override
   void initState() {
     super.initState();
-    titleController = TextEditingController(text: widget.message.title);
-    bodyController = TextEditingController(text: widget.message.body);
-  }
+    messagesService = MessagesService();
 
-  Future<void> saveChanges() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => loading = true);
-
-    await _service.updateMessage(
-      id: widget.message.id,
-      title: titleController.text,
-      body: bodyController.text,
-      email: null,
-      phone: null,
-    );
-
-    setState(() => loading = false);
-
-    Navigator.pop(context, true); 
+    titleController.text = widget.message.title ?? "";
+    bodyController.text = widget.message.body ?? "";
+    emailController.text = widget.message.email ?? "";
+    phoneController.text = widget.message.phone ?? "";
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Editar Anotação")),
+      appBar: AppBar(title: Text("Editar anotação")),
       body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: "Título"),
-                validator: (v) =>
-                    v == null || v.isEmpty ? "Informe o título" : null,
-              ),
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: InputDecoration(labelText: "Título *"),
+            ),
+            SizedBox(height: 12),
 
-              const SizedBox(height: 16),
+            TextField(
+              controller: bodyController,
+              decoration: InputDecoration(labelText: "Mensagem *"),
+              maxLines: 4,
+            ),
 
-              TextFormField(
-                controller: bodyController,
-                maxLines: 5,
-                decoration: const InputDecoration(labelText: "Conteúdo"),
-                validator: (v) =>
-                    v == null || v.isEmpty ? "Informe o conteúdo" : null,
-              ),
+            SizedBox(height: 12),
 
-              const SizedBox(height: 24),
+            TextField(
+              controller: emailController,
+              decoration: InputDecoration(labelText: "Email (opcional)"),
+            ),
 
-              ElevatedButton(
-                onPressed: loading ? null : saveChanges,
-                child: loading
-                    ? const CircularProgressIndicator()
-                    : const Text("Salvar Alterações"),
-              ),
-            ],
-          ),
+            SizedBox(height: 12),
+
+            TextField(
+              controller: phoneController,
+              decoration: InputDecoration(labelText: "Telefone (opcional)"),
+            ),
+
+            SizedBox(height: 20),
+
+            saving
+                ? CircularProgressIndicator()
+                : ElevatedButton(
+                    onPressed: () async {
+                      if (titleController.text.isEmpty ||
+                          bodyController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              "Título e mensagem são obrigatórios.",
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
+                      setState(() => saving = true);
+
+                      await messagesService.updateMessage(
+                        contactId: widget.contactId,
+                        messageId: widget.message.id,
+                        title: titleController.text,
+                        body: bodyController.text,
+                        email: emailController.text.isEmpty
+                            ? null
+                            : emailController.text,
+                        phone: phoneController.text.isEmpty
+                            ? null
+                            : phoneController.text,
+                      );
+
+                      if (!mounted) return;
+                      Navigator.pop(context, true);
+                    },
+                    child: Text("Salvar"),
+                  ),
+          ],
         ),
       ),
     );

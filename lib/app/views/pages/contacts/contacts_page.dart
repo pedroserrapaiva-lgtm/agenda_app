@@ -178,9 +178,12 @@ class _ContactsPageState extends State<ContactsPage> {
     loadContacts();
   }
 
-  Future<void> loadContacts() async {
+Future<void> loadContacts() async {
     try {
       final data = await contactsService.fetchContacts();
+
+      data.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+
       setState(() {
         contacts = data;
         loading = false;
@@ -190,6 +193,7 @@ class _ContactsPageState extends State<ContactsPage> {
       setState(() => loading = false);
     }
   }
+
 
   void openEditContactSheet(Contact contact) {
     showModalBottomSheet(

@@ -30,6 +30,7 @@ class _EditMessagePageState extends State<EditMessagePage> {
     super.initState();
     messagesService = MessagesService();
 
+    
     titleController.text = widget.message.title ?? "";
     bodyController.text = widget.message.body ?? "";
     emailController.text = widget.message.email ?? "";
@@ -40,14 +41,19 @@ class _EditMessagePageState extends State<EditMessagePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Editar anotação")),
-      body: Padding(
+
+      body: SingleChildScrollView(
+        
         padding: EdgeInsets.all(16),
+
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextField(
               controller: titleController,
               decoration: InputDecoration(labelText: "Título *"),
             ),
+
             SizedBox(height: 12),
 
             TextField(
@@ -58,6 +64,7 @@ class _EditMessagePageState extends State<EditMessagePage> {
 
             SizedBox(height: 12),
 
+            
             TextField(
               controller: emailController,
               decoration: InputDecoration(labelText: "Email (opcional)"),
@@ -65,6 +72,7 @@ class _EditMessagePageState extends State<EditMessagePage> {
 
             SizedBox(height: 12),
 
+            
             TextField(
               controller: phoneController,
               decoration: InputDecoration(labelText: "Telefone (opcional)"),
@@ -73,40 +81,44 @@ class _EditMessagePageState extends State<EditMessagePage> {
             SizedBox(height: 20),
 
             saving
-                ? CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: () async {
-                      if (titleController.text.isEmpty ||
-                          bodyController.text.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              "Título e mensagem são obrigatórios.",
+                ? Center(child: CircularProgressIndicator())
+                : SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (titleController.text.isEmpty ||
+                            bodyController.text.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                "Título e mensagem são obrigatórios.",
+                              ),
                             ),
-                          ),
+                          );
+                          return;
+                        }
+
+                        setState(() => saving = true);
+
+                        await messagesService.updateMessage(
+                          contactId: widget.contactId,
+                          messageId: widget.message.id,
+                          title: titleController.text,
+                          body: bodyController.text,
+                          email: emailController.text.isEmpty
+                              ? null
+                              : emailController.text,
+                          phone: phoneController.text.isEmpty
+                              ? null
+                              : phoneController.text,
                         );
-                        return;
-                      }
 
-                      setState(() => saving = true);
+                        if (!mounted) return;
 
-                      await messagesService.updateMessage(
-                        contactId: widget.contactId,
-                        messageId: widget.message.id,
-                        title: titleController.text,
-                        body: bodyController.text,
-                        email: emailController.text.isEmpty
-                            ? null
-                            : emailController.text,
-                        phone: phoneController.text.isEmpty
-                            ? null
-                            : phoneController.text,
-                      );
-
-                      if (!mounted) return;
-                      Navigator.pop(context, true);
-                    },
-                    child: Text("Salvar"),
+                        Navigator.pop(context, true);
+                      },
+                      child: Text("Salvar"),
+                    ),
                   ),
           ],
         ),

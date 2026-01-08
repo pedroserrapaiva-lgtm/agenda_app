@@ -51,7 +51,7 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 32),
 
-                    // CARD BRANCO
+                    
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(

@@ -128,6 +128,26 @@ class _ContactNotesPageState extends State<ContactNotesPage> {
 
           Text(msg.body ?? "", style: TextStyle(fontSize: 15)),
 
+          
+          if (msg.email != null && msg.email!.isNotEmpty) ...[
+            SizedBox(height: 10),
+            Text(
+              "Email: ${msg.email}",
+              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+            ),
+          ],
+
+          
+          if (msg.phone != null && msg.phone!.isNotEmpty) ...[
+            SizedBox(height: 4),
+            Text(
+              "Telefone: ${msg.phone}",
+              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+            ),
+          ],
+
+          SizedBox(height: 10),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -145,6 +165,7 @@ class _ContactNotesPageState extends State<ContactNotesPage> {
       ),
     );
   }
+
 
 
   void openCreateMessageSheet() {
